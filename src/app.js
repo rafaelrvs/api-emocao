@@ -1,10 +1,10 @@
-const express  = require("express")
+const express = require("express")
 const app = express()
 const sequelize = require('./config/config.js')
-
-
 const routes = require("./routes/index.js")
+
 routes(app)
+
 
 
 sequelize.authenticate()
