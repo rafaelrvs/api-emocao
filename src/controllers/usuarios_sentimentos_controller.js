@@ -44,6 +44,20 @@ class Usuarios_sentimentos_controller{
         }
     }
 
+    static async consulta_usuario_emocao(req, res) {
+        try {
+            const emoticons = await db.Usuario_sentimento.findAll();
+            
+            if (emoticons.length) {
+                return res.status(200).json(emoticons);
+            } else {
+                return res.status(404).json({ message: "Nenhuma emoção encontrada" });
+            }
+        } catch (error) {
+            console.error("Erro ao buscar emoções:", error);
+            return res.status(500).json({ message: "Erro ao buscar emoções" });
+        }
+    }
     
     
 

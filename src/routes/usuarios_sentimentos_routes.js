@@ -5,6 +5,7 @@ const Usuarios_sentimentos_controller = require("../controllers/usuarios_sentime
 
 const routes = Router();
 
+routes.get('/api/usuario_emocao/',(req,res)=>{Usuarios_sentimentos_controller. consulta_usuario_emocao(req,res)})
 routes.post('/api/usuario_emocao/',(req,res)=>{Usuarios_sentimentos_controller.cadastrar_usuario_emocao(req,res)})
 
 
