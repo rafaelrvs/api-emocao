@@ -4,7 +4,12 @@ const WebSocket = require('ws');
 
 let wsClient;
 
+// Função para conectar ao WebSocket
 function connectWebSocket() {
+    if (wsClient) {
+        wsClient.close(); // Fecha a conexão existente, se houver
+    }
+
     wsClient = new WebSocket('ws://localhost:8000');
 
     wsClient.onopen = () => {
@@ -24,13 +29,14 @@ function connectWebSocket() {
 // Inicializa a conexão WebSocket
 connectWebSocket();
 
-class Usuarios_sentimentos_controller {
-
-
+class UsuariosSentimentosController {
+    /**
+     * Cadastrar emoção para um usuário
+     */
     static async cadastrar_usuario_emocao(req, res) {
         const { sentimento_id } = req.body;
 
-        // Validação do sentimento_id
+        // Validação de entrada
         if (!sentimento_id) {
             return res.status(400).json({ message: "Informe um valor para 'sentimento_id'" });
         }
@@ -40,7 +46,7 @@ class Usuarios_sentimentos_controller {
         }
 
         try {
-            // Verificar se o sentimento_id existe
+            // Verificar se o sentimento_id existe no banco
             const sentimento = await db.Sentimento.findByPk(sentimento_id);
             if (!sentimento) {
                 return res.status(404).json({ message: "Sentimento não encontrado" });
@@ -48,21 +54,21 @@ class Usuarios_sentimentos_controller {
 
             const data = new Date();
 
-            // Tentar criar o registro em Usuario_sentimento
-            const cadastro_usuario_Emocao = await db.Usuario_sentimento.create({
+            // Criar o registro em Usuario_sentimento
+            const cadastroUsuarioEmocao = await db.Usuario_sentimento.create({
                 id: uuidv4(),
                 sentimento_id: sentimento_id,
-                data_criacao: data
+                data_criacao: data,
             });
 
-            // Envia uma mensagem JSON ao WebSocket após o cadastro
+            // Envia uma mensagem ao WebSocket
             if (wsClient && wsClient.readyState === WebSocket.OPEN) {
                 const message = {
                     type: "novo_cadastro",
                     data: {
-                        id: cadastro_usuario_Emocao.id,
-                        sentimento_id: cadastro_usuario_Emocao.sentimento_id,
-                        data_criacao: cadastro_usuario_Emocao.data_criacao,
+                        id: cadastroUsuarioEmocao.id,
+                        sentimento_id: cadastroUsuarioEmocao.sentimento_id,
+                        data_criacao: cadastroUsuarioEmocao.data_criacao,
                     },
                 };
                 wsClient.send(JSON.stringify(message));
@@ -71,17 +77,20 @@ class Usuarios_sentimentos_controller {
                 console.error('Conexão WebSocket não está aberta. Mensagem não enviada.');
             }
 
-            return res.status(200).json({ message: "Cadastro realizado com sucesso", emocao: cadastro_usuario_Emocao });
-
+            // Retorna a resposta com sucesso
+            return res.status(200).json({ 
+                message: "Cadastro realizado com sucesso", 
+                emocao: cadastroUsuarioEmocao 
+            });
         } catch (error) {
-            // Logar o erro para depuração
             console.error("Erro ao cadastrar emoção:", error);
-
-            // Retornar uma resposta de erro
             return res.status(500).json({ message: "Erro ao cadastrar emoção", error: error.message });
         }
     }
 
+    /**
+     * Consultar emoções de usuários
+     */
     static async consulta_usuario_emocao(req, res) {
         try {
             const emoticons = await db.Usuario_sentimento.findAll();
@@ -98,4 +107,4 @@ class Usuarios_sentimentos_controller {
     }
 }
 
-module.exports = Usuarios_sentimentos_controller;
+module.exports = UsuariosSentimentosController;
