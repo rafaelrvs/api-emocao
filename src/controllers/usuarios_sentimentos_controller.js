@@ -2,18 +2,30 @@ const db = require("../models/index.js");
 const { validate: isUUID, v4: uuidv4 } = require('uuid');
 const WebSocket = require('ws');
 
-// Configuração de uma conexão WebSocket persistente no servidor
-const wsClient = new WebSocket('ws://localhost:8000');
+let wsClient;
 
-wsClient.onopen = () => {
-    console.log('Conexão WebSocket estabelecida');
-};
+function connectWebSocket() {
+    wsClient = new WebSocket('ws://localhost:8000');
 
-wsClient.onclose = () => {
-    console.log('Conexão WebSocket fechada');
-};
+    wsClient.onopen = () => {
+        console.log('Conexão WebSocket estabelecida');
+    };
+
+    wsClient.onclose = () => {
+        console.log('Conexão WebSocket fechada. Tentando reconectar...');
+        setTimeout(connectWebSocket, 5000); // Reconecta após 5 segundos
+    };
+
+    wsClient.onerror = (error) => {
+        console.error('Erro no WebSocket:', error.message);
+    };
+}
+
+// Inicializa a conexão WebSocket
+connectWebSocket();
 
 class Usuarios_sentimentos_controller {
+
 
     static async cadastrar_usuario_emocao(req, res) {
         const { sentimento_id } = req.body;
@@ -44,7 +56,7 @@ class Usuarios_sentimentos_controller {
             });
 
             // Envia uma mensagem JSON ao WebSocket após o cadastro
-            if (wsClient.readyState === WebSocket.OPEN) {
+            if (wsClient && wsClient.readyState === WebSocket.OPEN) {
                 const message = {
                     type: "novo_cadastro",
                     data: {
@@ -56,7 +68,7 @@ class Usuarios_sentimentos_controller {
                 wsClient.send(JSON.stringify(message));
                 console.log('Mensagem enviada ao WebSocket:', message);
             } else {
-                console.error('Conexão WebSocket não está aberta');
+                console.error('Conexão WebSocket não está aberta. Mensagem não enviada.');
             }
 
             return res.status(200).json({ message: "Cadastro realizado com sucesso", emocao: cadastro_usuario_Emocao });
