@@ -7,20 +7,21 @@ module.exports = (app) => {
     // Lista de origens permitidas
     const allowedOrigins = ['http://localhost:3000', 'https://clima.amalfis.com.br'];
 
-    // Configuração dinâmica do CORS
-    app.use(cors({
-        origin: (origin, callback) => {
-            // Permitir origens na lista ou requisições sem origem (como de ferramentas de teste)
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true, // Permitir cookies ou autenticação
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
-        allowedHeaders: ['Content-Type', 'Authorization'], // Headers permitidos
-    }));
+    // Configuração do CORS
+    app.use((req, res, next) => {
+        const origin = req.headers.origin;
+        if (allowedOrigins.includes(origin)) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+        }
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        if (req.method === 'OPTIONS') {
+            res.status(200).end();
+            return;
+        }
+        next();
+    });
 
     // Middleware para JSON
     app.use(express.json());
