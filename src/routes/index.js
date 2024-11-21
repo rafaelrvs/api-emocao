@@ -4,16 +4,23 @@ const emocao_routes = require("./emocao_routes.js");
 const usuarios_sentimentos_routes = require("./usuarios_sentimentos_routes.js");
 
 module.exports = (app) => {
-    // Configuração do CORS
+    // Lista de origens permitidas
+    const allowedOrigins = ['http://localhost:3000', 'https://clima.amalfis.com.br'];
+
+    // Configuração dinâmica do CORS
     app.use(cors({
-        origin: 'http://localhost:3000/dashboard', // Porta do frontend
-        credentials: true, // Permitir envio de cookies ou autenticação
+        origin: (origin, callback) => {
+            // Permitir origens na lista ou requisições sem origem (como de ferramentas de teste)
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        credentials: true, // Permitir cookies ou autenticação
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
         allowedHeaders: ['Content-Type', 'Authorization'], // Headers permitidos
     }));
-
-    // Lidando com requisições OPTIONS
-    app.options('*', cors());
 
     // Middleware para JSON
     app.use(express.json());
