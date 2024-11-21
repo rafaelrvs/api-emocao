@@ -10,6 +10,7 @@ const httpsOptions = {
     cert: fs.readFileSync('/etc/letsencrypt/live/clima.amalfis.com.br/fullchain.pem')
 }; 
 
+
 const server = https.createServer(httpsOptions,app);
 
 server.listen(PORT,()=>{
